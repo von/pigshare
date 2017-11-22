@@ -85,6 +85,13 @@ class ArticleShort(Model):
     doi = fields.String(required=True)
     url = fields.String(required=True)
     published_date = Date(required=True)
+    thumb = fields.String(required=True)
+    url_private_api = fields.String(required=True)
+    url_private_html = fields.String(required=True)
+    url_public_api = fields.String(required=True)
+    url_public_html = fields.String(required=True)
+    defined_type = fields.Integer(required=True)
+    group_id = fields.Integer(required=False)
 
     # def __str__(self):
 
