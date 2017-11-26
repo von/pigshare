@@ -100,6 +100,7 @@ class ArticleShort(Model):
 
 class Category(Model):
 
+    parent_id = fields.Integer(required=True)
     id = fields.Integer(required=True)
     title = fields.String(required=True)
 
