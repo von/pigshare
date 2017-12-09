@@ -14,7 +14,7 @@ except ImportError:
 FIGSHARE_BASE_URL = 'https://api.figshare.com/v2'
 DEFAULT_LIMIT = 1000
 
-API_ARG_MAP = {'read_my_article': 'id', 'read_my_collection': 'id', 'add_article': 'article_ids', 'publish_article': 'id', 'read_article': 'id', 'read_collection': 'id', 'read_collection_articles': 'id',
+API_ARG_MAP = {'read_my_article': 'id', 'read_my_collection': 'id', 'add_article': 'article_ids', 'reserve_doi': 'id', 'publish_article': 'id', 'read_article': 'id', 'read_collection': 'id', 'read_collection_articles': 'id',
                                             'read_my_collection_articles': 'id', 'remove_article': 'article_id', 'search_articles': 'search_term', 'search_collections': 'search_term', 'upload_new_file': 'file', 'delete_article': 'article_id'}
 
 # Helper methods ========================================
@@ -408,6 +408,22 @@ class figshare_api(Resource):
 
         loc = ArticleLocation(**json.loads(response.body_string()))
         return loc
+
+    def call_reserve_doi(self, id):
+        '''
+        Reserve a DOI for an article
+
+        :type id: int
+        :param id: the article id
+        :return: DOI
+        :rtype: str
+        '''
+
+        response = self.post(
+            '/account/articles/{}/reserve_doi'.format(id), headers=get_headers(token=self.token))
+
+        doi = DOI(**json.loads(response.body_string()))
+        return doi.doi
 
     def call_publish_collection(self, id):
         '''

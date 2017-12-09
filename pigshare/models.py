@@ -278,6 +278,10 @@ class ArticleLocation(Model):
 
     location = fields.String()
 
+class DOI(Model):
+
+    doi = fields.String()
+
 
 class CollectionCreate(Model):
 
