@@ -1,5 +1,5 @@
-from restkit import Resource, request
 from .api import FIGSHARE_BASE_URL, get_headers
+import requests
 try:
     import simplejson as json
 except ImportError:
@@ -45,7 +45,7 @@ def add_totals_method(cls, stats_type, item_type):
     def totals_method(self, id):
 
         if self.institution:
-            response = self.get('/{0}/total/{1}/{2}/{3}'.format(self.institution, stats_type, item_type, id), params_dict={}, headers=get_headers(token=self.token))
+            response = self.session.get('/{0}/total/{1}/{2}/{3}'.format(self.institution, stats_type, item_type, id), params_dict={}, headers=get_headers(token=self.token))
         else:
             response = self.get('/total/{0}/{1}/{2}'.format(stats_type, item_type, id), params_dict={}, headers=get_headers(token=self.token))
 
@@ -146,7 +146,7 @@ def add_breakdown_method(cls, stats_type, item_type):
     setattr(cls, breakdown_method.__name__, breakdown_method)
     STATS_API_ID_ARG_MAP[breakdown_method.__name__[5:]] = 'id'
 
-class figshare_stats_api(Resource):
+class figshare_stats_api:
 
     def __init__(self, stats_url=STATS_DEFAULT_URL, institution=None, stats_token=None, verbose=False, **kwargs):
 
@@ -154,7 +154,9 @@ class figshare_stats_api(Resource):
         self.token = stats_token
         self.institution = institution
         self.verbose = verbose
-        super(figshare_stats_api, self).__init__(self.url)
+        self.session = requests.Session()
+        self.session.headers = get_headers(token=stats_token)
+        self.session.params = get_request_params()
 
 
 for s in STATS_TYPES:

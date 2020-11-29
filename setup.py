@@ -11,7 +11,7 @@ metadata['doc'] = re.findall('"""(.+)"""', init_py)[0]
 requirements = [
     "argparse",
     "setuptools",
-    "restkit",
+    "requests",
     "booby",
     "simplejson",
     "parinx",

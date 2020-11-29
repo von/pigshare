@@ -1,8 +1,8 @@
 from .models import *
-from restkit import Resource, request
 import inspect
 import hashlib
 import os
+import requests
 from . import caching
 from .input_helpers import create_article, create_collection, edit_article, edit_collection
 try:
@@ -77,14 +77,16 @@ def is_api_method(field):
 
 
 # API-Wrapper classes ===================================
-class figshare_api(Resource):
+class figshare_api:
 
     def __init__(self, url=FIGSHARE_BASE_URL, token=None, verbose=False, **kwargs):
 
         self.url = url
         self.token = token
         self.verbose = verbose
-        super(figshare_api, self).__init__(self.url)
+        self.session = requests.Session()
+        self.session.headers = get_headers(token=token)
+        self.session.params = get_request_params()
 
     def call_create_json(self, model):
         '''
@@ -116,9 +118,9 @@ class figshare_api(Resource):
         :rtype: list
         '''
 
-        response = self.get('/articles', params_dict=get_request_params())
+        response = self.session.get(self.url + '/articles')
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
         result = []
         for a in articles_json:
             art = ArticleShort(**a)
@@ -139,9 +141,10 @@ class figshare_api(Resource):
 
         payload = json.dumps(data)
 
-        response = self.post('/articles/search', payload=payload)
+        response = self.session.post(self.url + '/articles/search',
+                                     json=payload)
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
         result = []
         for a in articles_json:
             art = ArticleShort(**a)
@@ -164,9 +167,10 @@ class figshare_api(Resource):
 
         payload = json.dumps(data)
 
-        response = self.post('/articles/search', payload=payload)
+        response = self.session.post(self.url + '/articles/search',
+                                     json=payload)
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
         result = []
         for a in articles_json:
             art = ArticleShort(**a)
@@ -183,10 +187,9 @@ class figshare_api(Resource):
         :rtype: ArticleL2
         '''
 
-        response = self.get('/articles/{}'.format(id),
-                            headers=get_headers(token=self.token))
+        response = self.session.get(self.url + '/articles/{}'.format(id))
 
-        article_dict = json.loads(response.body_string())
+        article_dict = json.loads(response.text())
         # print article_dict
         article = ArticleL2(**article_dict)
 
@@ -204,10 +207,9 @@ class figshare_api(Resource):
         :rtype: Articles
         '''
 
-        response = self.get('/account/articles', headers=get_headers(
-            token=self.token), params_dict=get_request_params())
+        response = self.session.get(self.url + '/account/articles')
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
 
         result = []
         for a in articles_json:
@@ -229,14 +231,12 @@ class figshare_api(Resource):
         data['search_for'] = search_term
 
         # payload = json.dumps(data)
-        payload = data
-
         payload = json.dumps(data)
 
-        response = self.post('/account/articles/search',
-                             payload=payload, headers=get_headers(token=self.token))
+        response = self.session.post(self.url + '/account/articles/search',
+                                 json=payload)
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
         result = []
         for a in articles_json:
             art = ArticleShort(**a)
@@ -268,10 +268,10 @@ class figshare_api(Resource):
             print("--------------------")
             print()
 
-        response = self.post(path='/account/articles',
-                             payload=payload, headers=get_headers(token=self.token))
+        response = self.session.post(self.url + '/account/articles',
+                                     json=payload)
 
-        loc = ArticleLocation(**json.loads(response.body_string()))
+        loc = ArticleLocation(**json.loads(response.text()))
         return loc
 
     def call_update_article(self, id, article):
@@ -305,8 +305,8 @@ class figshare_api(Resource):
             print()
 
         try:
-            response = self.put('/account/articles/{}'.format(id),
-                                headers=get_headers(token=self.token), payload=payload)
+            response = self.session.put(self.url + '/account/articles/{}'.format(id),
+                                        json=payload)
         except Exception as e:
             print(e)
             return False
@@ -325,29 +325,29 @@ class figshare_api(Resource):
         :rtype: ArticleLocation
         '''
         payload = json.dumps(create_fileupload_dict(file))
-        response = self.post('/account/articles/{}/files'.format(id),
-                             headers=get_headers(token=self.token), payload=payload)
-        loc = ArticleLocation(**json.loads(response.body_string()))
+        response = self.session.post(self.url + '/account/articles/{}/files'.format(id),
+                                     json=payload)
+        loc = ArticleLocation(**json.loads(response.text()))
 
-        response = request(loc.location, headers=get_headers(token=self.token))
-        article_file = ArticleFile(**json.loads(response.body_string()))
+        response = self.session.get(loc.location)
+        article_file = ArticleFile(**json.loads(response.text()))
 
         # upload_url = '{0}/{1}'.format(article_file.upload_url,
                                       # article_file.upload_token)
         upload_url = article_file.upload_url
-        response = request(upload_url)
+        response = self.session.get(upload_url)
 
         article_file_upload_status = ArticleFileUploadStatus(
-            **json.loads(response.body_string()))
+            **json.loads(response.text()))
 
         with open(file, 'rb') as file_input:
             for part in article_file_upload_status.parts:
                 size = part['endOffset'] - part['startOffset'] + 1
-                response = request(
-                    '{0}/{1}'.format(upload_url, part.partNo), method='PUT', body=file_input.read(size))
+                response = self.session.put(
+                    '{0}/{1}'.format(upload_url, part.partNo),
+                    body=file_input.read(size))
 
-        response = request(loc.location, method='POST',
-                           headers=get_headers(token=self.token))
+        response = self.session.post(loc.location)
         return loc
 
     def call_read_my_article(self, id):
@@ -360,10 +360,9 @@ class figshare_api(Resource):
         :rtype: ArticleL2
         '''
 
-        response = self.get('/account/articles/{}'.format(id),
-                            headers=get_headers(token=self.token))
+        response = self.session.get(self.url + '/account/articles/{}'.format(id))
 
-        article_dict = json.loads(response.body_string())
+        article_dict = json.loads(response.text())
         # print article_dict
         article = ArticleL2(**article_dict)
 
@@ -382,10 +381,9 @@ class figshare_api(Resource):
         :rtype: FileShort
         '''
 
-        response = self.get('/account/articles/{}/files'.format(id),
-                            headers=get_headers(token=self.token))
+        response = self.session.get(self.url + '/account/articles/{}/files'.format(id))
 
-        file_json = json.loads(response.body_string())
+        file_json = json.loads(response.text())
 
         result = []
         for f in file_json:
@@ -403,10 +401,10 @@ class figshare_api(Resource):
         :rtype: str
         '''
 
-        response = self.post(
-            '/account/articles/{}/publish'.format(id), headers=get_headers(token=self.token))
+        response = self.session.post(
+            self.url + '/account/articles/{}/publish'.format(id))
 
-        loc = ArticleLocation(**json.loads(response.body_string()))
+        loc = ArticleLocation(**json.loads(response.text()))
         return loc
 
     def call_reserve_doi(self, id):
@@ -419,10 +417,10 @@ class figshare_api(Resource):
         :rtype: str
         '''
 
-        response = self.post(
-            '/account/articles/{}/reserve_doi'.format(id), headers=get_headers(token=self.token))
+        response = self.session.post(
+            self.url+'/account/articles/{}/reserve_doi'.format(id))
 
-        doi = DOI(**json.loads(response.body_string()))
+        doi = DOI(**json.loads(response.text()))
         return doi.doi
 
     def call_publish_collection(self, id):
@@ -435,10 +433,10 @@ class figshare_api(Resource):
         :rtype: str
         '''
 
-        response = self.post(
-            '/account/collections/{}/publish'.format(id), headers=get_headers(token=self.token))
+        response = self.session.post(
+            self.url+'/account/collections/{}/publish'.format(id))
 
-        loc = ArticleLocation(**json.loads(response.body_string()))
+        loc = ArticleLocation(**json.loads(response.text()))
         return loc
 
     def call_list_collections(self):
@@ -449,9 +447,9 @@ class figshare_api(Resource):
         :rtype: Collections
         '''
 
-        response = self.get('/collections', params_dict=get_request_params())
+        response = self.session.get(self.url+'/collections')
 
-        collections_json = json.loads(response.body_string())
+        collections_json = json.loads(response.text())
 
         result = []
         for c in collections_json:
@@ -474,7 +472,8 @@ class figshare_api(Resource):
 
         payload = json.dumps(data)
 
-        response = self.post('/collections/search', payload=payload)
+        response = self.session.post(self.url+'/collections/search',
+                                     json=payload)
 
         collections_json = json.loads(response.body_string())
         result = []
@@ -493,9 +492,9 @@ class figshare_api(Resource):
         :rtype: CollectionL1
         '''
 
-        response = self.get('/collections/{}'.format(id))
+        response = self.session.get(self.url+'/collections/{}'.format(id))
 
-        col_dict = json.loads(response.body_string())
+        col_dict = json.loads(response.text())
         col = CollectionL1(**col_dict)
 
         # author caching
@@ -514,10 +513,10 @@ class figshare_api(Resource):
         :rtype: list
         '''
 
-        response = self.get('/collections/{}/articles'.format(id),
-                            params_dict=get_request_params())
+        response = self.session.get(
+            self.url+'/collections/{}/articles'.format(id))
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
         result = []
 
         for a in articles_json:
@@ -533,10 +532,9 @@ class figshare_api(Resource):
         :rtype: Collections
         '''
 
-        response = self.get('/account/collections', params_dict=get_request_params(),
-                            headers=get_headers(token=self.token))
+        response = self.session.get(self.url+'/account/collections')
 
-        collections_json = json.loads(response.body_string())
+        collections_json = json.loads(response.text())
 
         result = []
         for c in collections_json:
@@ -554,10 +552,10 @@ class figshare_api(Resource):
         :rtype: CollectionL1
         '''
 
-        response = self.get('/account/collections/{}'.format(id),
-                            headers=get_headers(token=self.token))
+        response = self.session.get(
+            self.url+'/account/collections/{}'.format(id))
 
-        col_dict = json.loads(response.body_string())
+        col_dict = json.loads(response.text())
 
         col = CollectionL1(**col_dict)
         print(col)
@@ -578,10 +576,10 @@ class figshare_api(Resource):
         :rtype: Articles
         '''
 
-        response = self.get('/account/collections/{}/articles'.format(id),
-                            headers=get_headers(token=self.token), params_dict=get_request_params())
+        response = self.session.get(
+            self.url+'/account/collections/{}/articles'.format(id))
 
-        articles_json = json.loads(response.body_string())
+        articles_json = json.loads(response.text())
 
         result = []
         for a in articles_json:
@@ -614,10 +612,9 @@ class figshare_api(Resource):
             print("--------------------")
             print()
 
-        response = self.post(
-            '/account/collections', headers=get_headers(token=self.token), payload=payload)
+        response = self.session.post(self.url+'/account/collections')
 
-        loc = ArticleLocation(**json.loads(response.body_string()))
+        loc = ArticleLocation(**json.loads(response.text()))
         return loc
 
     def call_update_collection(self, id, collection):
@@ -650,8 +647,8 @@ class figshare_api(Resource):
             print()
 
         try:
-            response = self.put('/account/collections/{}'.format(id),
-                                headers=get_headers(token=self.token), payload=payload)
+            response = self.session.put(
+                self.url+'/account/collections/{}'.format(id))
         except Exception as e:
             print(e)
             return False
@@ -685,8 +682,8 @@ class figshare_api(Resource):
         payload['articles'] = article_ids
         payload = json.dumps(payload)
         try:
-            response = self.post('/account/collections/{}/articles'.format(id),
-                                 headers=get_headers(token=self.token), payload=payload)
+            response = self.session.post(
+                self.url+'/account/collections/{}/articles'.format(id))
         except Exception as e:
             print(e)
             return {"success": False}
@@ -714,8 +711,8 @@ class figshare_api(Resource):
         payload = json.dumps(payload)
 
         try:
-            response = self.put('/account/collections/{}/articles'.format(
-                collection_id), headers=get_headers(token=self.token), payload=payload)
+            response = self.session.put(
+                self.url+'/account/collections/{}/articles'.format(collection_id))
         except Exception as e:
             print(e)
             return {"success": False}
@@ -733,8 +730,8 @@ class figshare_api(Resource):
         '''
 
         try:
-            response = self.delete('/account/articles/{}'.format(
-                article_id), headers=get_headers(token=self.token))
+            response = self.session.delete(
+                self.url+'/account/articles/{}'.format(article_id))
         except Exception as e:
             print(e)
             return {"success": False}
@@ -757,8 +754,8 @@ class figshare_api(Resource):
         '''
 
         try:
-            response = self.delete('/account/collections/{}/articles/{}'.format(
-                collection_id, article_id), headers=get_headers(token=self.token))
+            response = self.session.delete(
+                self.url+'/account/collections/{}/articles/{}'.format(collection_id, article_id))
         except Exception as e:
             print(e)
             return {"success": False}
@@ -778,9 +775,9 @@ class figshare_api(Resource):
         :rtype: list
         '''
 
-        response = self.get('/categories')
+        response = self.session.get(self.url+'/categories')
 
-        categories_json = json.loads(response.body_string())
+        categories_json = json.loads(response.text())
 
         result = []
         for c in categories_json:
@@ -810,9 +807,9 @@ class figshare_api(Resource):
         :rtype: list
         '''
 
-        response = self.get('/licenses')
+        response = self.session.get(self.url+'/licenses')
 
-        licenses_json = json.loads(response.body_string())
+        licenses_json = json.loads(response.text())
 
         result = []
         for c in sorted(licenses_json, key=lambda lic: lic['value']):

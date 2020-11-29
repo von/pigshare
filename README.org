@@ -14,7 +14,7 @@ So far, I've only tested this on Linux.
 
  - argparse
  - setuptools
- - restkit
+ - requests
  - booby
  - simplejson
  - parinx

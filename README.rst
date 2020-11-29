@@ -24,7 +24,7 @@ Requirements
 
 -  argparse
 -  setuptools
--  restkit
+-  requests
 -  booby
 -  simplejson
 -  parinx
