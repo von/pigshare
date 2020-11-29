@@ -1,5 +1,5 @@
 from restkit import Resource, request
-from api import FIGSHARE_BASE_URL, get_headers
+from .api import FIGSHARE_BASE_URL, get_headers
 try:
     import simplejson as json
 except ImportError:

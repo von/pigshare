@@ -6,7 +6,7 @@ def create_models(cls, response):
     json = response.json()
 
     if len(json) >= 1000:
-        print "Max number of results, try to filter."
+        print("Max number of results, try to filter.")
 
     models = []
 
@@ -19,13 +19,13 @@ def create_models(cls, response):
 
 def print_item(model):
 
-    print model
+    print(model)
 
 
 def print_items(models):
 
     for m in models:
-        print m
+        print(m)
 
 
 def create_model(cls, response):
@@ -68,7 +68,7 @@ def add_filters(args, req_params={}):
 def utf8lize(obj):
     if isinstance(obj, dict):
         temp = {}
-        for k, v in obj.iteritems():
+        for k, v in obj.items():
             temp[k] = to_utf8(v)
         return temp
 
@@ -78,14 +78,14 @@ def utf8lize(obj):
             temp.append(to_utf8(x))
         return temp
 
-    if isinstance(obj, unicode):
+    if isinstance(obj, str):
         return obj.encode('utf-8')
 
     return obj
 
 
 def to_utf8(obj):
-    if isinstance(obj, unicode):
+    if isinstance(obj, str):
         return obj.encode('utf-8')
     return obj
 

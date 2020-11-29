@@ -1,10 +1,10 @@
-from models import *
+from .models import *
 from restkit import Resource, request
 import inspect
 import hashlib
 import os
-import caching
-from input_helpers import create_article, create_collection, edit_article, edit_collection
+from . import caching
+from .input_helpers import create_article, create_collection, edit_article, edit_collection
 try:
     import simplejson as json
 except ImportError:
@@ -104,9 +104,9 @@ class figshare_api(Resource):
         else:
             raise Exception("Model type '{}' not supported".format(model))
 
-        print
-        print "Result json for {}:".format(model)
-        print
+        print()
+        print("Result json for {}:".format(model))
+        print()
         return result
 
     def call_list_articles(self):
@@ -260,13 +260,13 @@ class figshare_api(Resource):
         payload = article.to_json()
 
         if self.verbose:
-            print
-            print "--------------------"
-            print "Generated json:"
-            print
-            print payload
-            print "--------------------"
-            print
+            print()
+            print("--------------------")
+            print("Generated json:")
+            print()
+            print(payload)
+            print("--------------------")
+            print()
 
         response = self.post(path='/account/articles',
                              payload=payload, headers=get_headers(token=self.token))
@@ -296,19 +296,19 @@ class figshare_api(Resource):
         payload = json.dumps(article_dict)
 
         if self.verbose:
-            print
-            print "--------------------"
-            print "Generated json:"
-            print
-            print payload
-            print "--------------------"
-            print
+            print()
+            print("--------------------")
+            print("Generated json:")
+            print()
+            print(payload)
+            print("--------------------")
+            print()
 
         try:
             response = self.put('/account/articles/{}'.format(id),
                                 headers=get_headers(token=self.token), payload=payload)
         except Exception as e:
-            print e
+            print(e)
             return False
 
         return self.call_read_my_article(id)
@@ -560,7 +560,7 @@ class figshare_api(Resource):
         col_dict = json.loads(response.body_string())
 
         col = CollectionL1(**col_dict)
-        print col
+        print(col)
 
         # author caching
         for au in col.authors:
@@ -606,13 +606,13 @@ class figshare_api(Resource):
         payload = collection.to_json()
 
         if self.verbose:
-            print
-            print "--------------------"
-            print "Generated json:"
-            print
-            print payload
-            print "--------------------"
-            print
+            print()
+            print("--------------------")
+            print("Generated json:")
+            print()
+            print(payload)
+            print("--------------------")
+            print()
 
         response = self.post(
             '/account/collections', headers=get_headers(token=self.token), payload=payload)
@@ -641,19 +641,19 @@ class figshare_api(Resource):
         payload = json.dumps(collection_dict)
 
         if self.verbose:
-            print
-            print "--------------------"
-            print "Generated json:"
-            print
-            print payload
-            print "--------------------"
-            print
+            print()
+            print("--------------------")
+            print("Generated json:")
+            print()
+            print(payload)
+            print("--------------------")
+            print()
 
         try:
             response = self.put('/account/collections/{}'.format(id),
                                 headers=get_headers(token=self.token), payload=payload)
         except Exception as e:
-            print e
+            print(e)
             return False
 
         # print "XXX"+str(response.body_string())
@@ -673,7 +673,7 @@ class figshare_api(Resource):
         :rtype: bool
         '''
 
-        if isinstance(article_ids, (int, long)):
+        if isinstance(article_ids, int):
             article_ids = [article_ids]
 
         # convert to ints
@@ -688,7 +688,7 @@ class figshare_api(Resource):
             response = self.post('/account/collections/{}/articles'.format(id),
                                  headers=get_headers(token=self.token), payload=payload)
         except Exception as e:
-            print e
+            print(e)
             return {"success": False}
 
         return {"success": True}
@@ -717,7 +717,7 @@ class figshare_api(Resource):
             response = self.put('/account/collections/{}/articles'.format(
                 collection_id), headers=get_headers(token=self.token), payload=payload)
         except Exception as e:
-            print e
+            print(e)
             return {"success": False}
 
         return {"success": True}
@@ -736,7 +736,7 @@ class figshare_api(Resource):
             response = self.delete('/account/articles/{}'.format(
                 article_id), headers=get_headers(token=self.token))
         except Exception as e:
-            print e
+            print(e)
             return {"success": False}
 
         return {"success": True}
@@ -760,7 +760,7 @@ class figshare_api(Resource):
             response = self.delete('/account/collections/{}/articles/{}'.format(
                 collection_id, article_id), headers=get_headers(token=self.token))
         except Exception as e:
-            print e
+            print(e)
             return {"success": False}
 
         return {"success": True}

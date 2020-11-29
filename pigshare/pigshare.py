@@ -1,7 +1,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 from signal import signal, SIGPIPE, SIG_DFL
-import caching
+from . import caching
 import sys
 
 # Ignore SIG_PIPE and don't throw exceptions on it...
@@ -9,17 +9,17 @@ import sys
 signal(SIGPIPE, SIG_DFL)
 
 
-from api import figshare_api
-from stats_api import figshare_stats_api as stats_api
-from stats_api import STATS_API_ID_ARG_MAP
-from api import API_ARG_MAP
+from .api import figshare_api
+from .stats_api import figshare_stats_api as stats_api
+from .stats_api import STATS_API_ID_ARG_MAP
+from .api import API_ARG_MAP
 
 import os
-import ConfigParser
+import configparser
 import logging
-from models import *
-from api import FIGSHARE_BASE_URL
-from input_helpers import create_article
+from .models import *
+from .api import FIGSHARE_BASE_URL
+from .input_helpers import create_article
 
 from pyclist.pyclist import pyclist
 
@@ -30,7 +30,7 @@ CONF_HOME = os.path.expanduser('~/.' + CONF_FILENAME)
 class PigshareConfig(object):
 
     def __init__(self):
-        self.config = ConfigParser.SafeConfigParser({'token': None, 'url': FIGSHARE_BASE_URL, 'institution': None, 'stats_token': None})
+        self.config = configparser.SafeConfigParser({'token': None, 'url': FIGSHARE_BASE_URL, 'institution': None, 'stats_token': None})
 
         try:
             user = os.environ['SUDO_USER']
@@ -43,12 +43,12 @@ class PigshareConfig(object):
 
         try:
             self.figshare_url = self.config.get('default', 'url')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+        except (configparser.NoSectionError, configparser.NoOptionError) as e:
             self.figshare_url = FIGSHARE_BASE_URL
 
         try:
             self.figshare_token = self.config.get('default', 'token')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+        except (configparser.NoSectionError, configparser.NoOptionError) as e:
             self.figshare_token = None
 
 

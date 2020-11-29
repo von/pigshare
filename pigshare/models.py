@@ -1,7 +1,7 @@
 from booby import Model, fields
 from booby.validators import nullable
 import json
-from helpers import *
+from .helpers import *
 
 FIGSHARE_BASE_URL = 'https://api.figshare.com/v2'
 # types:
@@ -36,7 +36,7 @@ class DateValidator(object):
 
     @nullable
     def validate(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise errors.ValidationError('should be a string')
 
 
@@ -45,12 +45,12 @@ class DefinedTypeValidator(object):
 
     @nullable
     def validate(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise errors.ValidationError('should be a string')
 
-        if value not in FIGSHARE_DEFINED_TYPES_DICT.values():
+        if value not in list(FIGSHARE_DEFINED_TYPES_DICT.values()):
             raise errors.ValidationError(
-                'should be one of ' + str(FIGSHARE_DEFINED_TYPES_DICT.values()))
+                'should be one of ' + str(list(FIGSHARE_DEFINED_TYPES_DICT.values())))
 
 # Extra models ========================================
 

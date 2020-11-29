@@ -28,8 +28,8 @@ def raw_issue_request(method, url, data=None):
         except ValueError:
             data = response.content
     except HTTPError as error:
-        print 'Caught an HTTPError: {}'.format(error.message)
-        print 'Body:\n', response.content
+        print('Caught an HTTPError: {}'.format(error.message))
+        print('Body:\n', response.content)
         raise
 
     return data
@@ -41,13 +41,13 @@ def issue_request(method, endpoint, *args, **kwargs):
 
 def list_articles():
     result = issue_request('GET', 'account/articles')
-    print 'Listing current articles:'
+    print('Listing current articles:')
     if result:
         for item in result:
-            print u'  {url} - {title}'.format(**item)
+            print('  {url} - {title}'.format(**item))
     else:
-        print '  No articles.'
-    print
+        print('  No articles.')
+    print()
 
 
 def create_article(title):
@@ -55,7 +55,7 @@ def create_article(title):
         'title': title  # You may add any other information about the article here as you wish.
     }
     result = issue_request('POST', 'account/articles', data=data)
-    print 'Created article:', result['location'], '\n'
+    print('Created article:', result['location'], '\n')
 
     result = raw_issue_request('GET', result['location'])
 
@@ -64,14 +64,14 @@ def create_article(title):
 
 def list_files_of_article(article_id):
     result = issue_request('GET', 'account/articles/{}/files'.format(article_id))
-    print 'Listing files for article {}:'.format(article_id)
+    print('Listing files for article {}:'.format(article_id))
     if result:
         for item in result:
-            print '  {id} - {name}'.format(**item)
+            print('  {id} - {name}'.format(**item))
     else:
-        print '  No files.'
+        print('  No files.')
 
-    print
+    print()
 
 
 def get_file_check_data(file_name):
@@ -96,7 +96,7 @@ def initiate_new_upload(article_id, file_name):
             'size': size}
 
     result = issue_request('POST', endpoint, data=data)
-    print 'Initiated file upload:', result['location'], '\n'
+    print('Initiated file upload:', result['location'], '\n')
 
     result = raw_issue_request('GET', result['location'])
 
@@ -111,11 +111,11 @@ def upload_parts(file_info):
     url = '{upload_url}/{upload_token}'.format(**file_info)
     result = raw_issue_request('GET', url)
 
-    print 'Uploading parts:'
+    print('Uploading parts:')
     with open(FILE_NAME, 'rb') as fin:
         for part in result['parts']:
             upload_part(file_info, fin, part)
-    print
+    print()
 
 
 def upload_part(file_info, stream, part):
@@ -127,7 +127,7 @@ def upload_part(file_info, stream, part):
     data = stream.read(part['endOffset'] - part['startOffset'] + 1)
 
     raw_issue_request('PUT', url, data=data)
-    print '  Uploaded part {partNo} from {startOffset} to {endOffset}'.format(**part)
+    print('  Uploaded part {partNo} from {startOffset} to {endOffset}'.format(**part))
 
 
 def main():
